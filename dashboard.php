@@ -18,6 +18,24 @@ while ($row = mysqli_fetch_assoc($result)) {
     $empresas[] = $row['empresa'];
     $totales[] = $row['total_ventas'];
 }
+
+// --- CONSULTA PARA PRODUCTOS MÁS VENDIDOS ---
+$queryProductos = "SELECT p.nombre AS producto, SUM(v.cantidad) AS total_vendidos
+                   FROM venta v
+                   JOIN producto p ON v.id_producto = p.id_producto
+                   GROUP BY p.id_producto
+                   ORDER BY total_vendidos DESC
+                   LIMIT 5";
+
+$resultProductos = mysqli_query($conn, $queryProductos);
+
+$productos = [];
+$vendidos = [];
+
+while ($row = mysqli_fetch_assoc($resultProductos)) {
+    $productos[] = $row['producto'];
+    $vendidos[] = $row['total_vendidos'];
+}
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -28,6 +46,41 @@ while ($row = mysqli_fetch_assoc($result)) {
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body class="p-5 bg-light">
+    
+<hr class="my-5">
+<h3 class="text-center mb-4">Top 5 Productos más Vendidos</h3>
+<div class="container">
+    <canvas id="chartProductos"></canvas>
+</div>
+
+<script>
+const ctxProd = document.getElementById('chartProductos');
+new Chart(ctxProd, {
+    type: 'bar',
+    data: {
+        labels: <?php echo json_encode($productos); ?>,
+        datasets: [{
+            label: 'Unidades Vendidas',
+            data: <?php echo json_encode($vendidos); ?>,
+            borderWidth: 1,
+            backgroundColor: 'rgba(255, 206, 86, 0.6)'
+        }]
+    },
+    options: {
+        plugins: {
+            legend: { display: false },
+            title: {
+                display: true,
+                text: 'Productos más vendidos (por cantidad)'
+            }
+        },
+        scales: {
+            y: { beginAtZero: true }
+        }
+    }
+});
+</script>
+
 <h3 class="text-center mb-4">Nivel 1 — Ventas por Empresa</h3>
 
 <div class="container">
