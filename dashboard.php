@@ -1,6 +1,7 @@
 <?php
 include("conexion.php");
 
+// CONSULTA PARA VENTAS POR EMPRESA
 $query = "SELECT e.id_empresa, e.nombre AS empresa, COALESCE(SUM(v.total), 0) AS total_ventas
           FROM empresa e
           LEFT JOIN sucursal s ON e.id_empresa = s.id_empresa
@@ -19,7 +20,7 @@ while ($row = mysqli_fetch_assoc($result)) {
     $totales[] = $row['total_ventas'];
 }
 
-// --- CONSULTA PARA PRODUCTOS MÁS VENDIDOS ---
+// CONSULTA PARA TOP 5 PRODUCTOS VENDIDOS
 $queryProductos = "SELECT p.nombre AS producto, SUM(v.cantidad) AS total_vendidos
                    FROM venta v
                    JOIN producto p ON v.id_producto = p.id_producto
@@ -54,6 +55,7 @@ while ($row = mysqli_fetch_assoc($resultProductos)) {
 </div>
 
 <script>
+// Gráfico de barras para productos más vendidos
 const ctxProd = document.getElementById('chartProductos');
 new Chart(ctxProd, {
     type: 'bar',
@@ -79,23 +81,23 @@ new Chart(ctxProd, {
         }
     }
 });
+// Fin gráfico productos más vendidos
 </script>
 
 <h3 class="text-center mb-4">Nivel 1 — Ventas por Empresa</h3>
 
 <div class="container">
     <canvas id="chartEmpresas"></canvas>
-
-    <div class="mt-4">
-        <h5>Indicador de rendimiento (Semáforo)</h5>
+    <div class="mt-4"> 
+        <h5>Indicador de rendimiento (Semáforo)</h5> 
         <?php foreach($empresas as $i => $nombre): 
             $ventas = $totales[$i];
             if ($ventas >= 400000) {
-                $color = 'bg-success';
+                $color = 'bg-success'; // Verde
             } elseif ($ventas >= 150000) {
-                $color = 'bg-warning';
+                $color = 'bg-warning'; // Amarillo
             } else {
-                $color = 'bg-danger';
+                $color = 'bg-danger'; // Rojo
             }
         ?>
             <a href="detalle.php?id_empresa=<?php echo $ids[$i]; ?>" class="text-decoration-none">
@@ -108,6 +110,7 @@ new Chart(ctxProd, {
 </div>
 
 <script>
+// Gráfico de barras para ventas por empresa
 const ctx = document.getElementById('chartEmpresas');
 new Chart(ctx, {
     type: 'bar',
