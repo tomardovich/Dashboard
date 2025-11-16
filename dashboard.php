@@ -37,6 +37,19 @@ while ($row = mysqli_fetch_assoc($resultProductos)) {
     $productos[] = $row['producto'];
     $vendidos[] = $row['total_vendidos'];
 }
+
+// --- CONSULTA PARA LISTAR TODOS LOS PRODUCTOS ---
+$queryTablaProductos = "
+    SELECT p.id_producto, p.nombre, p.categoria, p.precio,
+           COALESCE(SUM(v.cantidad), 0) AS cantidad_vendida
+    FROM producto p
+    LEFT JOIN venta v ON p.id_producto = v.id_producto
+    GROUP BY p.id_producto, p.nombre, p.categoria, p.precio
+    ORDER BY p.id_producto;
+";
+
+$resultTablaProductos = mysqli_query($conn, $queryTablaProductos);
+
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -134,5 +147,36 @@ new Chart(ctx, {
     }
 });
 </script>
+
+<hr class="my-5">
+
+<h3 class="text-center mb-4">Listado Completo de Productos</h3>
+
+<div class="container">
+    <table class="table table-striped table-bordered">
+        <thead class="table-dark">
+            <tr>
+                <th>ID</th>
+                <th>Producto</th>
+                <th>Categoría</th>
+                <th>Precio ($)</th>
+                <th>Cantidad Vendida</th>
+            </tr>
+        </thead>
+        <tbody>
+            <?php while($row = mysqli_fetch_assoc($resultTablaProductos)): ?>
+                <tr>
+                    <td><?php echo $row['id_producto']; ?></td>
+                    <td><?php echo $row['nombre']; ?></td>
+                    <td><?php echo $row['categoria']; ?></td>
+                    <td><?php echo number_format($row['precio'], 0, ',', '.'); ?></td>
+                    <td><?php echo $row['cantidad_vendida']; ?></td>
+                </tr>
+            <?php endwhile; ?>
+        </tbody>
+    </table>
+</div>
+
+
 </body>
 </html>
