@@ -47,8 +47,11 @@ $queryTablaProductos = "
     GROUP BY p.id_producto, p.nombre, p.categoria, p.precio
     ORDER BY p.id_producto;
 ";
-
 $resultTablaProductos = mysqli_query($conn, $queryTablaProductos);
+
+// --- CONSULTA PARA USUARIOS ---
+$queryUsuarios = "SELECT id_usuario, nombre, apellido, username, email, rol, fecha_creacion, activo FROM usuario ORDER BY id_usuario";
+$resultUsuarios = mysqli_query($conn, $queryUsuarios);
 
 ?>
 <!DOCTYPE html>
@@ -176,6 +179,55 @@ new Chart(ctx, {
         </tbody>
     </table>
 </div>
+
+<hr class="my-5">
+
+<h3 class="text-center mb-4">Usuarios del Sistema</h3>
+
+<div class="container">
+    <table id="tablaUsuarios" class="table table-striped table-bordered">
+        <thead class="table-dark">
+            <tr>
+                <th>ID</th>
+                <th>Nombre</th>
+                <th>Apellido</th>
+                <th>Usuario</th>
+                <th>Email</th>
+                <th>Rol</th>
+                <th>Fecha Creación</th>
+                <th>Activo</th>
+            </tr>
+        </thead>
+        <tbody>
+            <?php while($row = mysqli_fetch_assoc($resultUsuarios)): ?>
+            <tr>
+                <td><?= $row['id_usuario']; ?></td>
+                <td><?= $row['nombre']; ?></td>
+                <td><?= $row['apellido']; ?></td>
+                <td><?= $row['username']; ?></td>
+                <td><?= $row['email']; ?></td>
+                <td><?= $row['rol']; ?></td>
+                <td><?= $row['fecha_creacion']; ?></td>
+                <td><?= $row['activo'] ? 'Sí' : 'No'; ?></td>
+            </tr>
+            <?php endwhile; ?>
+        </tbody>
+    </table>
+</div>
+<script>
+$(document).ready(function() {
+    $('#tablaUsuarios').DataTable({
+        "pageLength": 5,
+        "language": {
+            "search": "Buscar:",
+            "paginate": {
+                "next": "Siguiente",
+                "previous": "Anterior"
+            }
+        }
+    });
+});
+</script>
 
 
 </body>

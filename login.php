@@ -1,16 +1,26 @@
 <?php
 include("conexion.php");
 
-// Consulta de usuarios
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $usuario = $_POST['usuario'];
-    $clave = base64_encode($_POST['clave']);
-    $sql = "SELECT * FROM usuario WHERE username='$usuario' AND password_encriptado='$clave'";
+    $clave = $_POST['clave'];
+
+    // Buscar el usuario por username
+    $sql = "SELECT * FROM usuario WHERE username='$usuario' LIMIT 1";
     $result = mysqli_query($conn, $sql);
 
+    // Si existe
     if (mysqli_num_rows($result) > 0) {
-        header("Location: dashboard.php");
-        exit;
+        $row = mysqli_fetch_assoc($result);
+
+        // Verificar contraseña encriptada con bcrypt
+        if (password_verify($clave, $row['password_encriptado'])) {
+            // Login correcto, redireccionar a dashboard
+            header("Location: dashboard.php");
+            exit;
+        } else {
+            $error = "¡Usuario o contraseña incorrectos!";
+        }
     } else {
         $error = "¡Usuario o contraseña incorrectos!";
     }
