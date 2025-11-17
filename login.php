@@ -1,28 +1,36 @@
 <?php
 include("conexion.php");
+session_start();
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
+
     $usuario = $_POST['usuario'];
     $clave = $_POST['clave'];
 
-    // Buscar el usuario por username
+    // Buscar usuario por username
     $sql = "SELECT * FROM usuario WHERE username='$usuario' LIMIT 1";
     $result = mysqli_query($conn, $sql);
 
-    // Si existe
-    if (mysqli_num_rows($result) > 0) {
+    if (mysqli_num_rows($result) == 1) {
+
         $row = mysqli_fetch_assoc($result);
 
-        // Verificar contraseña encriptada con bcrypt
+        // VERIFICAR CONTRASEÑA BCRYPT
         if (password_verify($clave, $row['password_encriptado'])) {
-            // Login correcto, redireccionar a dashboard
+
+            // Guardar sesión
+            $_SESSION['usuario'] = $row['username'];
+
+            // Redirigir a dashboard
             header("Location: dashboard.php");
             exit;
+
         } else {
-            $error = "¡Usuario o contraseña incorrectos!";
+            $error = "Usuario o contraseña incorrectos";
         }
+
     } else {
-        $error = "¡Usuario o contraseña incorrectos!";
+        $error = "Usuario o contraseña incorrectos";
     }
 }
 ?>
