@@ -1,4 +1,11 @@
 <?php
+session_start();
+
+if (!isset($_SESSION['usuario'])) {
+    header("Location: login.php");
+    exit;
+}
+
 include("conexion.php");
 
 $id_empresa = isset($_GET['id_empresa']) ? $_GET['id_empresa'] : null;

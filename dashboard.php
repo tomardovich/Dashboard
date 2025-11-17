@@ -1,4 +1,12 @@
 <?php
+session_start();
+
+// Si el usuario NO está logueado, volver al login
+if (!isset($_SESSION['usuario'])) {
+    header("Location: login.php");
+    exit;
+}
+
 include("conexion.php");
 
 // CONSULTA PARA VENTAS POR EMPRESA

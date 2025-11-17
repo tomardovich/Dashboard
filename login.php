@@ -7,7 +7,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $usuario = $_POST['usuario'];
     $clave = $_POST['clave'];
 
-    // Buscar usuario por username
     $sql = "SELECT * FROM usuario WHERE username='$usuario' LIMIT 1";
     $result = mysqli_query($conn, $sql);
 
@@ -15,16 +14,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
         $row = mysqli_fetch_assoc($result);
 
-        // VERIFICAR CONTRASEÑA BCRYPT
         if (password_verify($clave, $row['password_encriptado'])) {
-
-            // Guardar sesión
             $_SESSION['usuario'] = $row['username'];
-
-            // Redirigir a dashboard
             header("Location: dashboard.php");
             exit;
-
         } else {
             $error = "Usuario o contraseña incorrectos";
         }
