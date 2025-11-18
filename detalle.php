@@ -15,22 +15,28 @@ $id_sucursal = isset($_GET['id_sucursal']) ? $_GET['id_sucursal'] : null;
 if ($id_sucursal) {
     // Nivel 3 - VENTAS POR VENDEDOR
     // CONSULTA PARA VENTAS POR VENDEDOR
-    $query = "SELECT CONCAT(ve.nombre, ' ', ve.apellido) AS vendedor, SUM(v.total) AS total
-              FROM venta v
-              JOIN vendedor ve ON v.id_vendedor = ve.id_vendedor
-              WHERE ve.id_sucursal = $id_sucursal
-              GROUP BY ve.id_vendedor";
+    $query = "SELECT CONCAT(ve.nombre, ' ', ve.apellido) AS vendedor, 
+                 COALESCE(SUM(dv.cantidad * dv.precio_unitario), 0) AS total
+          FROM vendedor ve
+          LEFT JOIN venta v ON ve.id_vendedor = v.id_vendedor
+          LEFT JOIN detalle_venta dv ON v.id_venta = dv.id_venta
+          WHERE ve.id_sucursal = $id_sucursal
+          GROUP BY ve.id_vendedor";
+
     $titulo = "Nivel 3 — Ventas por Vendedor";
     $back = "detalle.php?id_empresa=(SELECT id_empresa FROM sucursal WHERE id_sucursal=$id_sucursal)";
 } else {
     // Nivel 2 - VENTAS POR SUCURSAL
     // CONSULTA PARA VENTAS POR SUCURSAL
-    $query = "SELECT s.id_sucursal, s.nombre AS sucursal, SUM(v.total) AS total
-              FROM sucursal s
-              LEFT JOIN vendedor ve ON s.id_sucursal = ve.id_sucursal
-              LEFT JOIN venta v ON ve.id_vendedor = v.id_vendedor
-              WHERE s.id_empresa = $id_empresa
-              GROUP BY s.id_sucursal, s.nombre";
+    $query = "SELECT s.id_sucursal, s.nombre AS sucursal, 
+                 COALESCE(SUM(dv.cantidad * dv.precio_unitario), 0) AS total
+          FROM sucursal s
+          LEFT JOIN vendedor ve ON s.id_sucursal = ve.id_sucursal
+          LEFT JOIN venta v ON ve.id_vendedor = v.id_vendedor
+          LEFT JOIN detalle_venta dv ON v.id_venta = dv.id_venta
+          WHERE s.id_empresa = $id_empresa
+          GROUP BY s.id_sucursal, s.nombre";
+
     $titulo = "Nivel 2 — Ventas por Sucursal";
     $back = "dashboard.php";
 }

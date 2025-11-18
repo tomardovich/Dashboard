@@ -10,12 +10,16 @@ if (!isset($_SESSION['usuario'])) {
 include("conexion.php");
 
 // CONSULTA PARA VENTAS POR EMPRESA
-$query = "SELECT e.id_empresa, e.nombre AS empresa, COALESCE(SUM(v.total), 0) AS total_ventas
-          FROM empresa e
-          LEFT JOIN sucursal s ON e.id_empresa = s.id_empresa
-          LEFT JOIN vendedor ve ON s.id_sucursal = ve.id_sucursal
-          LEFT JOIN venta v ON ve.id_vendedor = v.id_vendedor
-          GROUP BY e.id_empresa, e.nombre";
+$query = "
+SELECT e.id_empresa, e.nombre AS empresa, COALESCE(SUM(dv.cantidad * dv.precio_unitario), 0) AS total_ventas
+FROM empresa e
+LEFT JOIN sucursal s ON e.id_empresa = s.id_empresa
+LEFT JOIN vendedor ve ON s.id_sucursal = ve.id_sucursal
+LEFT JOIN venta v ON ve.id_vendedor = v.id_vendedor
+LEFT JOIN detalle_venta dv ON v.id_venta = dv.id_venta
+GROUP BY e.id_empresa, e.nombre
+";
+
 $result = mysqli_query($conn, $query);
 
 $empresas = [];
@@ -29,9 +33,9 @@ while ($row = mysqli_fetch_assoc($result)) {
 }
 
 // CONSULTA PARA TOP 5 PRODUCTOS VENDIDOS
-$queryProductos = "SELECT p.nombre AS producto, SUM(v.cantidad) AS total_vendidos
-                   FROM venta v
-                   JOIN producto p ON v.id_producto = p.id_producto
+$queryProductos = "SELECT p.nombre AS producto, SUM(dv.cantidad) AS total_vendidos
+                   FROM detalle_venta dv
+                   JOIN producto p ON dv.id_producto = p.id_producto
                    GROUP BY p.id_producto
                    ORDER BY total_vendidos DESC
                    LIMIT 5";
@@ -49,12 +53,13 @@ while ($row = mysqli_fetch_assoc($resultProductos)) {
 // --- CONSULTA PARA LISTAR TODOS LOS PRODUCTOS ---
 $queryTablaProductos = "
     SELECT p.id_producto, p.nombre, p.categoria, p.precio,
-           COALESCE(SUM(v.cantidad), 0) AS cantidad_vendida
+           COALESCE(SUM(dv.cantidad), 0) AS cantidad_vendida
     FROM producto p
-    LEFT JOIN venta v ON p.id_producto = v.id_producto
+    LEFT JOIN detalle_venta dv ON p.id_producto = dv.id_producto
     GROUP BY p.id_producto, p.nombre, p.categoria, p.precio
     ORDER BY p.id_producto;
 ";
+
 $resultTablaProductos = mysqli_query($conn, $queryTablaProductos);
 
 // --- CONSULTA PARA USUARIOS ---
@@ -236,7 +241,5 @@ $(document).ready(function() {
     });
 });
 </script>
-
-
 </body>
 </html>
