@@ -1,7 +1,7 @@
 <?php
 session_start();
 
-// 🔒 Verificación de sesión
+// Verificación de sesión
 if (!isset($_SESSION['usuario'])) {
     header("Location: login.php");
     exit;
@@ -9,9 +9,7 @@ if (!isset($_SESSION['usuario'])) {
 
 include("conexion.php");
 
-///////////////////////////
-// 1. VENTAS POR EMPRESA //
-///////////////////////////
+// VENTAS POR EMPRESA
 $query = "
 SELECT e.id_empresa, e.nombre AS empresa, COALESCE(SUM(dv.cantidad * dv.precio_unitario), 0) AS total_ventas
 FROM empresa e
@@ -29,9 +27,7 @@ while ($row = mysqli_fetch_assoc($result)) {
     $totales[] = $row['total_ventas'];
 }
 
-/////////////////////////////////////////
-// 2. TOP 5 PRODUCTOS MÁS VENDIDOS //
-/////////////////////////////////////////
+// TOP 5 PRODUCTOS MÁS VENDIDOS
 $queryProductos = "
 SELECT p.nombre AS producto, SUM(dv.cantidad) AS total_vendidos
 FROM detalle_venta dv
@@ -47,9 +43,7 @@ while ($row = mysqli_fetch_assoc($resultProductos)) {
     $vendidos[] = $row['total_vendidos'];
 }
 
-//////////////////////////////////////////////
-// 3. LISTADO COMPLETO DE PRODUCTOS //
-//////////////////////////////////////////////
+// LISTADO COMPLETO DE PRODUCTOS
 $queryTablaProductos = "
 SELECT p.id_producto, p.nombre, p.categoria, p.precio,
        COALESCE(SUM(dv.cantidad), 0) AS cantidad_vendida
@@ -60,9 +54,7 @@ ORDER BY p.id_producto
 ";
 $resultTablaProductos = mysqli_query($conn, $queryTablaProductos);
 
-/////////////////////////
-// 4. USUARIOS //
-/////////////////////////
+// USUARIOS
 $queryUsuarios = "
 SELECT id_usuario, nombre, apellido, username, email, rol, fecha_creacion, activo
 FROM usuario
@@ -217,18 +209,6 @@ new Chart(ctx, {
         </tbody>
     </table>
 </div>
-
-<!-- Script opcional para DataTables -->
-<script>
-$(document).ready(function() {
-    $('#tablaUsuarios').DataTable({
-        pageLength: 5,
-        language: {
-            search: "Buscar:",
-            paginate: { next: "Siguiente", previous: "Anterior" }
-        }
-    });
-});
 </script>
 </body>
 </html>
