@@ -9,7 +9,7 @@ if (!isset($_SESSION['usuario'])) {
 
 include("conexion.php");
 
-// VENTAS POR EMPRESA
+// --- VENTAS POR EMPRESA ---
 $query = "
 SELECT e.id_empresa, e.nombre AS empresa, COALESCE(SUM(dv.cantidad * dv.precio_unitario), 0) AS total_ventas
 FROM empresa e
@@ -27,7 +27,7 @@ while ($row = mysqli_fetch_assoc($result)) {
     $totales[] = $row['total_ventas'];
 }
 
-// TOP 5 PRODUCTOS MÁS VENDIDOS
+// --- TOP 5 PRODUCTOS MÁS VENDIDOS ---
 $queryProductos = "
 SELECT p.nombre AS producto, SUM(dv.cantidad) AS total_vendidos
 FROM detalle_venta dv
@@ -43,7 +43,7 @@ while ($row = mysqli_fetch_assoc($resultProductos)) {
     $vendidos[] = $row['total_vendidos'];
 }
 
-// LISTADO COMPLETO DE PRODUCTOS
+// --- LISTADO COMPLETO DE PRODUCTOS ---
 $queryTablaProductos = "
 SELECT p.id_producto, p.nombre, p.categoria, p.precio,
        COALESCE(SUM(dv.cantidad), 0) AS cantidad_vendida
@@ -54,7 +54,7 @@ ORDER BY p.id_producto
 ";
 $resultTablaProductos = mysqli_query($conn, $queryTablaProductos);
 
-// USUARIOS
+// --- USUARIOS ---
 $queryUsuarios = "
 SELECT id_usuario, nombre, apellido, username, email, rol, fecha_creacion, activo
 FROM usuario
@@ -69,18 +69,98 @@ $resultUsuarios = mysqli_query($conn, $queryUsuarios);
     <title>Dashboard de Ventas</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        h3 { color: #333; }
+        .sem-box { transition: transform 0.2s ease; }
+        .sem-box:hover { transform: scale(1.02); }
+        .shadow-md { box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+    </style>
 </head>
-<body class="p-5 bg-light">
-
-<!-- Gráfico: Productos más Vendidos -->
-<hr class="my-5">
-<h3 class="text-center mb-4">Top 5 Productos más Vendidos</h3>
+<body class="p-4 bg-light">
 <div class="container">
-    <canvas id="chartProductos"></canvas>
+
+    <!-- Top 5 Productos -->
+    <section class="my-5">
+        <h3 class="text-center mb-4">Top 5 Productos más Vendidos</h3>
+        <canvas id="chartProductos"></canvas>
+    </section>
+
+    <!-- Ventas por Empresa -->
+    <section class="my-5">
+        <h3 class="text-center mb-4">Nivel 1 — Ventas por Empresa</h3>
+        <canvas id="chartEmpresas"></canvas>
+        <div class="mt-4">
+            <h5 class="mb-3">Indicador de rendimiento (Semáforo)</h5>
+            <?php foreach ($empresas as $i => $nombre):
+                $ventas = $totales[$i];
+                $color = $ventas >= 400000 ? 'bg-success' : ($ventas >= 150000 ? 'bg-warning' : 'bg-danger');
+            ?>
+            <a href="detalle.php?id_empresa=<?= $ids[$i]; ?>" class="text-decoration-none">
+                <div class="p-2 rounded text-white mb-2 sem-box <?= $color; ?>">
+                    <?= $nombre . " — $" . number_format($ventas, 0, ',', '.'); ?>
+                </div>
+            </a>
+            <?php endforeach; ?>
+        </div>
+    </section>
+
+    <!-- Tabla de Productos -->
+    <section class="my-5">
+        <h3 class="text-center mb-4">Listado Completo de Productos</h3>
+        <div class="table-responsive">
+            <table class="table table-striped table-bordered shadow-md">
+                <thead class="table-dark">
+                    <tr>
+                        <th>ID</th><th>Producto</th><th>Categoría</th><th>Precio ($)</th><th>Cantidad Vendida</th>
+                    </tr>
+                </thead>
+                <tbody>
+                <?php while ($row = mysqli_fetch_assoc($resultTablaProductos)): ?>
+                    <tr>
+                        <td><?= $row['id_producto']; ?></td>
+                        <td><?= $row['nombre']; ?></td>
+                        <td><?= $row['categoria']; ?></td>
+                        <td><?= number_format($row['precio'], 0, ',', '.'); ?></td>
+                        <td><?= $row['cantidad_vendida']; ?></td>
+                    </tr>
+                <?php endwhile; ?>
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <!-- Tabla de Usuarios -->
+    <section class="my-5">
+        <h3 class="text-center mb-4">Usuarios del Sistema</h3>
+        <div class="table-responsive">
+            <table class="table table-striped table-bordered shadow-md">
+                <thead class="table-dark">
+                    <tr>
+                        <th>ID</th><th>Nombre</th><th>Apellido</th><th>Usuario</th><th>Email</th><th>Rol</th><th>Fecha Creación</th><th>Activo</th>
+                    </tr>
+                </thead>
+                <tbody>
+                <?php while ($row = mysqli_fetch_assoc($resultUsuarios)): ?>
+                    <tr>
+                        <td><?= $row['id_usuario']; ?></td>
+                        <td><?= $row['nombre']; ?></td>
+                        <td><?= $row['apellido']; ?></td>
+                        <td><?= $row['username']; ?></td>
+                        <td><?= $row['email']; ?></td>
+                        <td><?= $row['rol']; ?></td>
+                        <td><?= $row['fecha_creacion']; ?></td>
+                        <td><?= $row['activo'] ? 'Sí' : 'No'; ?></td>
+                    </tr>
+                <?php endwhile; ?>
+                </tbody>
+            </table>
+        </div>
+    </section>
 </div>
+
 <script>
-const ctxProd = document.getElementById('chartProductos');
-new Chart(ctxProd, {
+// Gráfico de Productos más Vendidos
+new Chart(document.getElementById('chartProductos'), {
     type: 'bar',
     data: {
         labels: <?= json_encode($productos); ?>,
@@ -96,36 +176,12 @@ new Chart(ctxProd, {
             legend: { display: false },
             title: { display: true, text: 'Productos más vendidos (por cantidad)' }
         },
-        scales: {
-            y: { beginAtZero: true }
-        }
+        scales: { y: { beginAtZero: true } }
     }
 });
-</script>
 
-<!-- Gráfico: Ventas por Empresa -->
-<h3 class="text-center mb-4">Nivel 1 — Ventas por Empresa</h3>
-<div class="container">
-    <canvas id="chartEmpresas"></canvas>
-
-    <!-- Semáforo de Rendimiento -->
-    <div class="mt-4">
-        <h5>Indicador de rendimiento (Semáforo)</h5>
-        <?php foreach ($empresas as $i => $nombre):
-            $ventas = $totales[$i];
-            $color = $ventas >= 400000 ? 'bg-success' : ($ventas >= 150000 ? 'bg-warning' : 'bg-danger');
-        ?>
-        <a href="detalle.php?id_empresa=<?= $ids[$i]; ?>" class="text-decoration-none">
-            <div class="p-2 rounded text-white mb-2 <?= $color; ?>">
-                <?= $nombre . " — $" . number_format($ventas, 0, ',', '.'); ?>
-            </div>
-        </a>
-        <?php endforeach; ?>
-    </div>
-</div>
-<script>
-const ctx = document.getElementById('chartEmpresas');
-new Chart(ctx, {
+// Gráfico de Ventas por Empresa
+new Chart(document.getElementById('chartEmpresas'), {
     type: 'bar',
     data: {
         labels: <?= json_encode($empresas); ?>,
@@ -146,69 +202,6 @@ new Chart(ctx, {
         }
     }
 });
-</script>
-
-<!-- Tabla: Productos -->
-<hr class="my-5">
-<h3 class="text-center mb-4">Listado Completo de Productos</h3>
-<div class="container">
-    <table class="table table-striped table-bordered">
-        <thead class="table-dark">
-            <tr>
-                <th>ID</th>
-                <th>Producto</th>
-                <th>Categoría</th>
-                <th>Precio ($)</th>
-                <th>Cantidad Vendida</th>
-            </tr>
-        </thead>
-        <tbody>
-        <?php while ($row = mysqli_fetch_assoc($resultTablaProductos)): ?>
-            <tr>
-                <td><?= $row['id_producto']; ?></td>
-                <td><?= $row['nombre']; ?></td>
-                <td><?= $row['categoria']; ?></td>
-                <td><?= number_format($row['precio'], 0, ',', '.'); ?></td>
-                <td><?= $row['cantidad_vendida']; ?></td>
-            </tr>
-        <?php endwhile; ?>
-        </tbody>
-    </table>
-</div>
-
-<!-- Tabla: Usuarios -->
-<hr class="my-5">
-<h3 class="text-center mb-4">Usuarios del Sistema</h3>
-<div class="container">
-    <table id="tablaUsuarios" class="table table-striped table-bordered">
-        <thead class="table-dark">
-            <tr>
-                <th>ID</th>
-                <th>Nombre</th>
-                <th>Apellido</th>
-                <th>Usuario</th>
-                <th>Email</th>
-                <th>Rol</th>
-                <th>Fecha Creación</th>
-                <th>Activo</th>
-            </tr>
-        </thead>
-        <tbody>
-        <?php while ($row = mysqli_fetch_assoc($resultUsuarios)): ?>
-            <tr>
-                <td><?= $row['id_usuario']; ?></td>
-                <td><?= $row['nombre']; ?></td>
-                <td><?= $row['apellido']; ?></td>
-                <td><?= $row['username']; ?></td>
-                <td><?= $row['email']; ?></td>
-                <td><?= $row['rol']; ?></td>
-                <td><?= $row['fecha_creacion']; ?></td>
-                <td><?= $row['activo'] ? 'Sí' : 'No'; ?></td>
-            </tr>
-        <?php endwhile; ?>
-        </tbody>
-    </table>
-</div>
 </script>
 </body>
 </html>
