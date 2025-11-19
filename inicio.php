@@ -42,6 +42,14 @@ while ($row = mysqli_fetch_assoc($result)) {
         <canvas id="chartEmpresas"></canvas>
 
         <div class="mt-4">
+            
+        <!-- Leyenda de colores del semáforo -->
+        <div class="mb-3">
+            <span class="badge bg-success me-2">Verde: $400.000 o más</span>
+            <span class="badge bg-warning text-dark me-2">Amarillo: entre $399.999 y $150.000</span>
+            <span class="badge bg-danger">Rojo: menos de $150.000</span>
+        </div>
+
             <h5>Indicador de rendimiento (Semáforo)</h5>
             <?php foreach ($empresas as $i => $nombre):
                 $ventas = $totales[$i];
