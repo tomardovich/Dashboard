@@ -1,7 +1,7 @@
 <?php
 $servername = "localhost";
 $username = "root";
-$password = "Paocgur1ñ31ñ4";
+$password = "123456";
 $database = "dashboard_ventas";
 
 $conn = mysqli_connect($servername, $username, $password, $database);
