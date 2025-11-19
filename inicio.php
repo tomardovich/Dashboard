@@ -25,6 +25,7 @@ while ($row = mysqli_fetch_assoc($result)) {
     $totales[] = $row['total_ventas'];
 }
 ?>
+
 <!DOCTYPE html>
 <html lang="es">
 <head>

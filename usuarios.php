@@ -1,5 +1,4 @@
 <?php
-// usuarios.php
 session_start();
 if (!isset($_SESSION['usuario'])) {
     header("Location: login.php");
@@ -15,6 +14,7 @@ ORDER BY id_usuario
 ";
 $resultUsuarios = mysqli_query($conn, $queryUsuarios);
 ?>
+
 <!DOCTYPE html>
 <html lang="es">
 <head>

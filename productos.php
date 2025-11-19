@@ -1,5 +1,4 @@
 <?php
-// productos.php
 session_start();
 if (!isset($_SESSION['usuario'])) {
     header("Location: login.php");
@@ -34,6 +33,7 @@ ORDER BY p.id_producto
 ";
 $resultTablaProductos = mysqli_query($conn, $queryTablaProductos);
 ?>
+
 <!DOCTYPE html>
 <html lang="es">
 <head>

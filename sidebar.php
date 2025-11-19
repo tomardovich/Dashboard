@@ -1,4 +1,3 @@
-<!-- sidebar.php -->
 <div class="bg-dark text-white p-3" style="min-width: 220px; height: 100vh; position: fixed;">
     <h4 class="mb-4">Menú</h4>
     <ul class="nav flex-column">
