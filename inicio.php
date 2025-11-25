@@ -9,14 +9,14 @@ include("conexion.php");
 
 // --- VENTAS POR EMPRESA ---
 $query = "
-SELECT e.id_empresa, e.nombre AS empresa, COALESCE(SUM(dv.cantidad * dv.precio_unitario), 0) AS total_ventas
+SELECT e.id_empresa, e.nombre AS empresa, COALESCE(SUM(v.total), 0) AS total_ventas
 FROM empresa e
 LEFT JOIN sucursal s ON e.id_empresa = s.id_empresa
 LEFT JOIN vendedor ve ON s.id_sucursal = ve.id_sucursal
 LEFT JOIN venta v ON ve.id_vendedor = v.id_vendedor
-LEFT JOIN detalle_venta dv ON v.id_venta = dv.id_venta
 GROUP BY e.id_empresa, e.nombre
 ";
+
 $result = mysqli_query($conn, $query);
 $empresas = $totales = $ids = [];
 while ($row = mysqli_fetch_assoc($result)) {
