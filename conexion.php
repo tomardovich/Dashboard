@@ -1,18 +1,21 @@
 <?php
 $servername = "localhost";
 $username = "root";
-$password = "123456"; // Recuerda cambiar esto en producción
+$password = "123456"; // Recuerda cambiar en producción
 $database = "dashboard_ventas";
 
 $conn = mysqli_connect($servername, $username, $password, $database);
 
-// Verificar conexión
 if (!$conn) {
     die("Error al conectar: " . mysqli_connect_error());
 }
 
-// ESTO ES LO NUEVO E IMPORTANTE:
-// Forzamos a que los datos viajen en UTF-8 para que se vean bien los acentos y ñ
+// Forzamos UTF-8
 mysqli_set_charset($conn, "utf8");
 
+// --- CONFIGURACIÓN GLOBAL (KPIs) ---
+// Definimos aquí las metas para todo el sistema
+$meta_alta = 400000;   // Verde
+$meta_media = 150000;  // Amarillo
+// Rojo es todo lo que esté por debajo de media
 ?>

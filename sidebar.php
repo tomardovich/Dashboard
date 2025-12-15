@@ -9,6 +9,9 @@
             <a class="nav-link text-white" href="productos.php">📦 Productos</a>
         </li>
 
+        <li class="nav-item mb-2">
+            <a class="nav-link text-white" href="vendedores.php">👔 Vendedores</a>
+        </li>
         <?php if (isset($_SESSION['rol']) && $_SESSION['rol'] == 'Administrador'): ?>
             <li class="nav-item mb-2">
                 <a class="nav-link text-white" href="usuarios.php">👥 Usuarios</a>
