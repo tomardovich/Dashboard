@@ -1,12 +1,24 @@
 <?php
 session_start();
+
+// 1. Verificamos que esté logueado
 if (!isset($_SESSION['usuario'])) {
     header("Location: login.php");
     exit;
 }
+
+// 2. VERIFICACIÓN DE ROL (¡CRÍTICO!)
+// Si el rol NO es Administrador, lo mandamos de vuelta al inicio.
+if ($_SESSION['rol'] != 'Administrador') {
+    // Opcional: Podrías mandarlo a una página de "Acceso Denegado"
+    header("Location: inicio.php"); 
+    exit;
+}
+
 include("conexion.php");
 
 // --- USUARIOS ---
+// No hay input de usuario aquí, así que el query simple es seguro contra SQLi.
 $queryUsuarios = "
 SELECT id_usuario, nombre, apellido, username, email, rol, fecha_creacion, activo
 FROM usuario
@@ -44,14 +56,29 @@ $resultUsuarios = mysqli_query($conn, $queryUsuarios);
             <tbody>
                 <?php while ($row = mysqli_fetch_assoc($resultUsuarios)): ?>
                     <tr>
-                        <td><?= $row['id_usuario']; ?></td>
-                        <td><?= $row['nombre']; ?></td>
-                        <td><?= $row['apellido']; ?></td>
-                        <td><?= $row['username']; ?></td>
-                        <td><?= $row['email']; ?></td>
-                        <td><?= $row['rol']; ?></td>
-                        <td><?= $row['fecha_creacion']; ?></td>
-                        <td><?= $row['activo'] ? 'Sí' : 'No'; ?></td>
+                        <td><?= htmlspecialchars($row['id_usuario']); ?></td>
+                        <td><?= htmlspecialchars($row['nombre']); ?></td>
+                        <td><?= htmlspecialchars($row['apellido']); ?></td>
+                        <td><?= htmlspecialchars($row['username']); ?></td>
+                        <td><?= htmlspecialchars($row['email']); ?></td>
+                        
+                        <td>
+                            <?php if($row['rol'] == 'Administrador'): ?>
+                                <span class="badge bg-danger">Administrador</span>
+                            <?php else: ?>
+                                <span class="badge bg-secondary"><?= htmlspecialchars($row['rol']); ?></span>
+                            <?php endif; ?>
+                        </td>
+                        
+                        <td><?= htmlspecialchars($row['fecha_creacion']); ?></td>
+                        
+                        <td>
+                            <?php if($row['activo']): ?>
+                                <span class="text-success fw-bold">Sí</span>
+                            <?php else: ?>
+                                <span class="text-danger fw-bold">No</span>
+                            <?php endif; ?>
+                        </td>
                     </tr>
                 <?php endwhile; ?>
             </tbody>

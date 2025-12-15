@@ -18,11 +18,12 @@ LIMIT 5
 $resultProductos = mysqli_query($conn, $queryProductos);
 $productos = $vendidos = [];
 while ($row = mysqli_fetch_assoc($resultProductos)) {
-    $productos[] = $row['producto'];
+    $productos[] = $row['producto']; // Aquí no hace falta sanitizar para JS array, json_encode lo hace
     $vendidos[] = $row['total_vendidos'];
 }
 
 // --- LISTADO COMPLETO DE PRODUCTOS ---
+// Nota: Aquí no usamos Prepared Statements porque la consulta no tiene variables externas.
 $queryTablaProductos = "
 SELECT p.id_producto, p.nombre, p.categoria, p.precio,
        COALESCE(SUM(dv.cantidad), 0) AS cantidad_vendida
@@ -48,7 +49,7 @@ $resultTablaProductos = mysqli_query($conn, $queryTablaProductos);
 
     <div class="p-4" style="margin-left: 220px; width: 100%;">
         <h3 class="text-center mb-4">Top 5 Productos más Vendidos</h3>
-        <canvas id="chartProductos"></canvas>
+        <canvas id="chartProductos" style="max-height: 400px;"></canvas>
 
         <hr class="my-5">
         <h3 class="text-center mb-4">Listado Completo de Productos</h3>
@@ -58,18 +59,22 @@ $resultTablaProductos = mysqli_query($conn, $queryTablaProductos);
                     <th>ID</th>
                     <th>Producto</th>
                     <th>Categoría</th>
-                    <th>Precio ($)</th>
-                    <th>Cantidad Vendida</th>
-                </tr>
+                    <th>Precio Unit.</th>
+                    <th>Cant. Vendida</th>
+                    <th>Total Generado</th> </tr>
             </thead>
             <tbody>
-                <?php while ($row = mysqli_fetch_assoc($resultTablaProductos)): ?>
+                <?php while ($row = mysqli_fetch_assoc($resultTablaProductos)): 
+                    // Calculamos el total generado al vuelo
+                    $totalGenerado = $row['precio'] * $row['cantidad_vendida'];
+                ?>
                     <tr>
-                        <td><?= $row['id_producto']; ?></td>
-                        <td><?= $row['nombre']; ?></td>
-                        <td><?= $row['categoria']; ?></td>
-                        <td><?= number_format($row['precio'], 0, ',', '.'); ?></td>
+                        <td><?= htmlspecialchars($row['id_producto']); ?></td>
+                        <td><?= htmlspecialchars($row['nombre']); ?></td>
+                        <td><?= htmlspecialchars($row['categoria']); ?></td>
+                        <td>$<?= number_format($row['precio'], 0, ',', '.'); ?></td>
                         <td><?= $row['cantidad_vendida']; ?></td>
+                        <td class="fw-bold text-success">$<?= number_format($totalGenerado, 0, ',', '.'); ?></td>
                     </tr>
                 <?php endwhile; ?>
             </tbody>
@@ -81,18 +86,20 @@ const ctxProd = document.getElementById('chartProductos');
 new Chart(ctxProd, {
     type: 'bar',
     data: {
-        labels: <?= json_encode($productos); ?>,
+        labels: <?= json_encode($productos); ?>, // json_encode es seguro contra XSS en JS
         datasets: [{
             label: 'Unidades Vendidas',
             data: <?= json_encode($vendidos); ?>,
             backgroundColor: 'rgba(255, 206, 86, 0.6)',
+            borderColor: 'rgba(255, 206, 86, 1)',
             borderWidth: 1
         }]
     },
     options: {
+        responsive: true,
         plugins: {
             legend: { display: false },
-            title: { display: true, text: 'Productos más vendidos (por cantidad)' }
+            title: { display: true, text: 'Top 5 Productos (Por cantidad)' }
         },
         scales: {
             y: { beginAtZero: true }

@@ -1,4 +1,10 @@
 <?php
+// --- AGREGA ESTO TEMPORALMENTE PARA VER EL ERROR ---
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
+// ---------------------------------------------------
+
 include("conexion.php");
 session_start();
 
@@ -6,13 +12,25 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $usuario = $_POST['usuario'];
     $clave = $_POST['clave'];
 
-    $sql = "SELECT * FROM usuario WHERE username='$usuario' LIMIT 1";
-    $result = mysqli_query($conn, $sql);
+    // 1. Preparamos la consulta con un marcador de posición (?)
+    $sql = "SELECT id_usuario, username, password_encriptado, rol FROM usuario WHERE username = ? LIMIT 1";
+    $stmt = mysqli_prepare($conn, $sql);
 
-    if (mysqli_num_rows($result) == 1) {
-        $row = mysqli_fetch_assoc($result);
+    // 2. Vinculamos el parámetro "s" significa string
+    mysqli_stmt_bind_param($stmt, "s", $usuario);
+
+    // 3. Ejecutamos
+    mysqli_stmt_execute($stmt);
+    $result = mysqli_stmt_get_result($stmt);
+
+    if ($row = mysqli_fetch_assoc($result)) {
+        // Verificar la contraseña con el hash
         if (password_verify($clave, $row['password_encriptado'])) {
+            // Login exitoso
             $_SESSION['usuario'] = $row['username'];
+            $_SESSION['rol'] = $row['rol']; 
+            $_SESSION['id_usuario'] = $row['id_usuario']; 
+            
             header("Location: dashboard.php");
             exit;
         } else {
@@ -21,6 +39,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     } else {
         $error = "Usuario o contraseña incorrectos";
     }
+    
+    // Cerramos la sentencia
+    mysqli_stmt_close($stmt);
 }
 ?>
 
