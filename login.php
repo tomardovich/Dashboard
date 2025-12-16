@@ -1,10 +1,4 @@
 <?php
-// --- AGREGA ESTO TEMPORALMENTE PARA VER EL ERROR ---
-ini_set('display_errors', 1);
-ini_set('display_startup_errors', 1);
-error_reporting(E_ALL);
-// ---------------------------------------------------
-
 include("conexion.php");
 session_start();
 
@@ -12,11 +6,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $usuario = $_POST['usuario'];
     $clave = $_POST['clave'];
 
-    // 1. Preparamos la consulta con un marcador de posición (?)
+    // 1. Preparamos la consulta con un marcador de posición
     $sql = "SELECT id_usuario, username, password_encriptado, rol FROM usuario WHERE username = ? LIMIT 1";
     $stmt = mysqli_prepare($conn, $sql);
 
-    // 2. Vinculamos el parámetro "s" significa string
+    // 2. Vinculamos el parámetro
     mysqli_stmt_bind_param($stmt, "s", $usuario);
 
     // 3. Ejecutamos
@@ -40,7 +34,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $error = "Usuario o contraseña incorrectos";
     }
     
-    // Cerramos la sentencia
     mysqli_stmt_close($stmt);
 }
 ?>

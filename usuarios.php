@@ -7,10 +7,9 @@ if (!isset($_SESSION['usuario'])) {
     exit;
 }
 
-// 2. VERIFICACIÓN DE ROL (¡CRÍTICO!)
+// 2. VERIFICACIÓN DE ROL
 // Si el rol NO es Administrador, lo mandamos de vuelta al inicio.
 if ($_SESSION['rol'] != 'Administrador') {
-    // Opcional: Podrías mandarlo a una página de "Acceso Denegado"
     header("Location: inicio.php"); 
     exit;
 }
@@ -18,7 +17,6 @@ if ($_SESSION['rol'] != 'Administrador') {
 include("conexion.php");
 
 // --- USUARIOS ---
-// No hay input de usuario aquí, así que el query simple es seguro contra SQLi.
 $queryUsuarios = "
 SELECT id_usuario, nombre, apellido, username, email, rol, fecha_creacion, activo
 FROM usuario

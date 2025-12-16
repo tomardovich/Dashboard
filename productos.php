@@ -18,12 +18,11 @@ LIMIT 5
 $resultProductos = mysqli_query($conn, $queryProductos);
 $productos = $vendidos = [];
 while ($row = mysqli_fetch_assoc($resultProductos)) {
-    $productos[] = $row['producto']; // Aquí no hace falta sanitizar para JS array, json_encode lo hace
+    $productos[] = $row['producto'];
     $vendidos[] = $row['total_vendidos'];
 }
 
 // --- LISTADO COMPLETO DE PRODUCTOS ---
-// Nota: Aquí no usamos Prepared Statements porque la consulta no tiene variables externas.
 $queryTablaProductos = "
 SELECT p.id_producto, p.nombre, p.categoria, p.precio,
        COALESCE(SUM(dv.cantidad), 0) AS cantidad_vendida
@@ -65,7 +64,7 @@ $resultTablaProductos = mysqli_query($conn, $queryTablaProductos);
             </thead>
             <tbody>
                 <?php while ($row = mysqli_fetch_assoc($resultTablaProductos)): 
-                    // Calculamos el total generado al vuelo
+                    // Calculamos el total generado
                     $totalGenerado = $row['precio'] * $row['cantidad_vendida'];
                 ?>
                     <tr>

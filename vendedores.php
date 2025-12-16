@@ -9,7 +9,7 @@ if (!isset($_SESSION['usuario'])) {
 include("conexion.php");
 
 // 2. Consulta con JOINs para traer nombres reales
-// Unimos Vendedor -> Sucursal -> Empresa
+// Donde se unen Vendedor -> Sucursal -> Empresa
 $queryVendedores = "
 SELECT v.id_vendedor, v.nombre, v.apellido, s.nombre AS sucursal, e.nombre AS empresa
 FROM vendedor v

@@ -1,5 +1,4 @@
 <?php
-// inicio.php
 session_start();
 if (!isset($_SESSION['usuario'])) {
     header("Location: login.php");
@@ -7,10 +6,10 @@ if (!isset($_SESSION['usuario'])) {
 }
 
 include("conexion.php"); 
-// Al incluir conexion.php, automáticamente tenemos disponibles $meta_alta y $meta_media
+// Al incluir conexion.php, tenemos disponibles $meta_alta y $meta_media
 
 // --- VENTAS POR EMPRESA ---
-// Consulta segura (sin variables externas, no requiere prepare statement)
+// Consulta segura
 $query = "
 SELECT e.id_empresa, e.nombre AS empresa, COALESCE(SUM(v.total), 0) AS total_ventas
 FROM empresa e
@@ -25,7 +24,7 @@ $empresas = $totales = $ids = [];
 
 while ($row = mysqli_fetch_assoc($result)) {
     $ids[] = $row['id_empresa'];
-    $empresas[] = $row['empresa']; // Para el gráfico JS (json_encode lo maneja seguro)
+    $empresas[] = $row['empresa']; // Para el gráfico JS
     $totales[] = $row['total_ventas'];
 }
 ?>

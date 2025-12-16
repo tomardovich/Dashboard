@@ -1,5 +1,4 @@
 <?php
-// inicio.php
 session_start();
 if (!isset($_SESSION['usuario'])) {
     header("Location: login.php");
@@ -8,8 +7,7 @@ if (!isset($_SESSION['usuario'])) {
 
 include("conexion.php");
 
-// 1. Sanitización y validación de IDs (IMPORTANTE)
-// Forzamos a que sean enteros y establecemos un valor por defecto seguro (0)
+// 1. Sanitización y validación de IDs
 $id_empresa = (int) ($_GET['id_empresa'] ?? 0);
 $id_sucursal = (int) ($_GET['id_sucursal'] ?? 0);
 
@@ -17,21 +15,15 @@ $id_sucursal = (int) ($_GET['id_sucursal'] ?? 0);
 $query = $queryVentas = $titulo = $back = null;
 $labels = $totales = $ids = [];
 $ventas = [];
-$param_id = 0; // ID a usar en los prepared statements
-
-// Definir metas al inicio para fácil configuración (Semáforo)
-$meta_alta = 400000;
-$meta_media = 150000;
+$param_id = 0; 
 
 // --- Lógica del Dashboard por Nivel ---
-
-// Nivel 3 — Vendedor (Si tenemos un ID de sucursal válido)
+// Nivel 3 — Vendedor
 if ($id_sucursal > 0) {
     $param_id = $id_sucursal;
     $titulo = "Nivel 3 — Ventas por Vendedor";
     
-    // *** SEGURIDAD Y LÓGICA PARA EL BOTÓN VOLVER ***
-    // Primero obtenemos el ID de la empresa padre de forma SEGURA
+    // Obtener ID de empresa para el botón Volver
     $stmt_back = mysqli_prepare($conn, "SELECT id_empresa FROM sucursal WHERE id_sucursal = ?");
     mysqli_stmt_bind_param($stmt_back, "i", $param_id);
     mysqli_stmt_execute($stmt_back);
@@ -39,11 +31,10 @@ if ($id_sucursal > 0) {
     $row_back = mysqli_fetch_assoc($result_back);
     mysqli_stmt_close($stmt_back);
     
-    // Usamos el ID de empresa obtenido de forma segura para construir el link
     $id_empresa_for_back = $row_back['id_empresa'] ?? 0;
     $back = "detalle.php?id_empresa=" . $id_empresa_for_back;
 
-    // CONSULTA PRINCIPAL (Agregado de Ventas por Vendedor)
+    // CONSULTA PRINCIPAL
     $query = "SELECT CONCAT(ve.nombre, ' ', ve.apellido) AS vendedor, COALESCE(SUM(v.total), 0) AS total
               FROM vendedor ve
               LEFT JOIN venta v ON v.id_vendedor = ve.id_vendedor
@@ -58,13 +49,13 @@ if ($id_sucursal > 0) {
                     ORDER BY v.fecha DESC";
     
 } 
-// Nivel 2 — Sucursal (Si tenemos un ID de empresa válido)
+// Nivel 2 — Sucursal
 else if ($id_empresa > 0) {
     $param_id = $id_empresa;
     $titulo = "Nivel 2 — Ventas por Sucursal";
     $back = "inicio.php";
 
-    // CONSULTA PRINCIPAL (Agregado de Ventas por Sucursal)
+    // CONSULTA PRINCIPAL
     $query = "SELECT s.id_sucursal, s.nombre AS sucursal, COALESCE(SUM(v.total), 0) AS total
               FROM sucursal s
               LEFT JOIN vendedor ve ON s.id_sucursal = ve.id_sucursal
@@ -80,31 +71,24 @@ else if ($id_empresa > 0) {
                     WHERE s.id_empresa = ?
                     ORDER BY v.fecha DESC";
 } else {
-    // Si no hay ID en la URL, redirigir por seguridad
     header("Location: inicio.php");
     exit;
 }
 
-// --- Ejecución de Consultas con Sentencias Preparadas ---
-
-// 1. Ejecución de la Consulta Principal ($query)
+// 1. Gráfico
 $stmt = mysqli_prepare($conn, $query);
 mysqli_stmt_bind_param($stmt, "i", $param_id); 
 mysqli_stmt_execute($stmt);
 $result = mysqli_stmt_get_result($stmt);
 mysqli_stmt_close($stmt);
 
-// Recolección de datos para el gráfico
 while ($row = mysqli_fetch_assoc($result)) {
-    // Si es Nivel 2, guardamos el ID de sucursal para el drill-down
     if (isset($row['id_sucursal'])) $ids[] = $row['id_sucursal'];
-    
-    // Obtenemos la etiqueta (nombre de sucursal o nombre de vendedor)
     $labels[] = $row[array_keys($row)[0]]; 
     $totales[] = $row['total'];
 }
 
-// 2. Ejecución de la Consulta de Ventas Individuales ($queryVentas)
+// 2. Lista de Ventas
 $stmt_ventas = mysqli_prepare($conn, $queryVentas);
 mysqli_stmt_bind_param($stmt_ventas, "i", $param_id); 
 mysqli_stmt_execute($stmt_ventas);
@@ -145,11 +129,11 @@ $ventas = mysqli_fetch_all($resultVentas, MYSQLI_ASSOC);
                 $ventasTot = $totales[$i];
                 $color = $ventasTot >= $meta_alta ? 'bg-success' : ($ventasTot >= $meta_media ? 'bg-warning' : 'bg-danger');
             ?>
-                <?php if ($id_sucursal > 0): // Estamos en Nivel 3 (Vendedores), no hay link más abajo ?>
+                <?php if ($id_sucursal > 0): ?>
                     <div class="p-2 rounded text-white mb-2 <?= $color; ?>">
                         <?= htmlspecialchars($nombre) . " — $" . number_format($ventasTot, 0, ',', '.'); ?>
                     </div>
-                <?php else: // Estamos en Nivel 2 (Sucursales), link a vendedores ?>
+                <?php else: ?>
                     <a href="detalle.php?id_sucursal=<?= $ids[$i]; ?>" class="text-decoration-none">
                         <div class="p-2 rounded text-white mb-2 <?= $color; ?>">
                             <?= htmlspecialchars($nombre) . " — $" . number_format($ventasTot, 0, ',', '.'); ?>
@@ -159,14 +143,24 @@ $ventas = mysqli_fetch_all($resultVentas, MYSQLI_ASSOC);
             <?php endforeach; ?>
         </div>
 
-        <h5 class="mt-4">Ventas individuales:</h5>
-        <?php foreach ($ventas as $venta): 
-            $color = $venta['total'] >= $meta_alta ? 'bg-success' : ($venta['total'] >= $meta_media ? 'bg-warning' : 'bg-danger');
-        ?>
-            <div class="p-2 rounded text-white mb-2 <?= $color; ?>">
-                Venta #<?= $venta['id_venta']; ?> — $<?= number_format($venta['total'], 0, ',', '.'); ?> (<?= $venta['fecha']; ?>)
-            </div>
-        <?php endforeach; ?>
+        <h5 class="mt-4">Historial de Ventas (Click para ver detalle):</h5>
+        <div class="list-group">
+            <?php foreach ($ventas as $venta): 
+            
+                $colorClass = $venta['total'] >= $meta_alta ? 'list-group-item-success' : ($venta['total'] >= $meta_media ? 'list-group-item-warning' : 'list-group-item-danger');
+            ?>
+                <a href="ticket.php?id_venta=<?= $venta['id_venta']; ?>" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center <?= $colorClass; ?>">
+                    <span>
+                        <strong>Venta #<?= $venta['id_venta']; ?></strong> 
+                        <small class="text-muted ms-2">(<?= $venta['fecha']; ?>)</small>
+                    </span>
+                    <span class="fw-bold">
+                        $<?= number_format($venta['total'], 0, ',', '.'); ?> ➡
+                    </span>
+                </a>
+            <?php endforeach; ?>
+        </div>
+
     </div>
 </div>
 
@@ -185,8 +179,6 @@ new Chart(ctx, {
     },
     options: {
         onClick: (evt, elements) => {
-            // Solo activar click si estamos en nivel sucursal (para ir a vendedores)
-            // Si $id_sucursal es 0 (falso), significa que estamos viendo sucursales y podemos hacer click
             if (elements.length > 0 && <?= $id_sucursal ? 'false' : 'true'; ?>) {
                 const index = elements[0].index;
                 const id = <?= json_encode($ids); ?>[index];
